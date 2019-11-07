@@ -33,7 +33,7 @@ function ote_on_these_views() {
 	// $oxygen_theme_enabler_options = get_option( 'oxygen_theme_enabler_option_name' ); // Array of All Options
 	// $myifcondition = $oxygen_theme_enabler_options['enter_your_if_condition_1'];
 
-	return ( is_page( 'contact' ) ? true : false ); // enter your if condition here. Reference: https://codex.wordpress.org/Conditional_Tags
+	return is_page( 'contact' ); // enter your if condition here. Reference: https://codex.wordpress.org/Conditional_Tags
 }
 
 /**

@@ -11,7 +11,7 @@ Here, you can select whether you want to use the theme or Oxygen for most of you
 You will need to edit the following line in `plugin.php` file of the plugin and enter your if conditional:
 
 ```
-return ( is_page( 'contact' ) ? true : false ); // enter your if condition here. Reference: https://codex.wordpress.org/Conditional_Tags
+return is_page( 'contact' ); // enter your if condition here. Reference: https://codex.wordpress.org/Conditional_Tags
 ```
 
 Replace `is_page( 'contact' )` with the conditional depending on where you want to use the theme/Oxygen.
@@ -34,6 +34,9 @@ A few valid examples:
 4. Activate the plugin.
 
 ## Changelog ##
+
+### 1.0.1 - November 07, 2019 ###
+* Simplified the return statement
 
 ### 1.0.0 - August 06, 2018 ###
 * Initial Release
