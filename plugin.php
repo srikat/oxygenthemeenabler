@@ -3,9 +3,9 @@
 Plugin Name:	Oxygen Theme Enabler
 Plugin URI:		https://wpdevdesign.com/oxygen-theme-enabler-plugin/
 Description:	Enables the active theme when using Oxygen.
-Version:		1.0.0
+Version:		1.0.1
 Author:			Sridhar Katakam
-Author URI:		https://sridharkatakam.com
+Author URI:		https://wpdevdesign.com
 License:		GPL-2.0+
 License URI:	http://www.gnu.org/licenses/gpl-2.0.txt
 
