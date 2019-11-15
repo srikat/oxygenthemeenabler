@@ -3,7 +3,7 @@
 Plugin Name:	Oxygen Theme Enabler
 Plugin URI:		https://wpdevdesign.com/oxygen-theme-enabler-plugin/
 Description:	Enables the active theme when using Oxygen.
-Version:		1.0.1
+Version:		1.0.2
 Author:			Sridhar Katakam
 Author URI:		https://wpdevdesign.com
 License:		GPL-2.0+
@@ -27,13 +27,18 @@ if ( ! defined( 'WPINC' ) ) {
 	die;
 }
 
-// Callback for setting the if condition where theme should be used instead of Oxygen.
+// Return early if the webpage is being edited by Oxygen editor.
+if ( isset ( $_GET['ct_builder'] ) && 'true' === $_GET['ct_builder'] ) {
+	return;
+}
+
+// Callback for setting the if condition where theme or Oxygen should be used.
 function ote_on_these_views() {
 
 	// $oxygen_theme_enabler_options = get_option( 'oxygen_theme_enabler_option_name' ); // Array of All Options
 	// $myifcondition = $oxygen_theme_enabler_options['enter_your_if_condition_1'];
 
-	return is_page( 'contact' ); // enter your if condition here. Reference: https://codex.wordpress.org/Conditional_Tags
+	return is_page( 'about-me' ); // enter your if condition here. Reference: https://codex.wordpress.org/Conditional_Tags
 }
 
 /**
@@ -153,12 +158,12 @@ if ( is_admin() ) {
  * $enter_your_if_condition_1 = $oxygen_theme_enabler_options['enter_your_if_condition_1']; // Enter your if condition
  */
 
-// Override the theme name change from "oxygen-is-not-a-theme" by Oxygen.
-remove_filter( 'template', 'ct_oxygen_template_name' );
-
-// Reverse empty stylesheet URL from being returned by Oxygen.
+// Reverse empty stylesheet URL being returned by Oxygen.
 remove_filter( 'template_directory', 'ct_disable_theme_load', 1, 1 );
 remove_filter( 'stylesheet_directory', 'ct_disable_theme_load', 1, 1 );
+
+// Override the theme name change from "oxygen-is-not-a-theme" by Oxygen.
+remove_filter( 'template', 'ct_oxygen_template_name' );
 
 remove_filter( 'template_include', 'ct_css_output', 99 );
 add_filter( 'template_include', 'ote_ct_css_output', 99 );
@@ -171,9 +176,7 @@ add_filter( 'template_include', 'ote_ct_css_output', 99 );
  * @author gagan goraya
  * @author sridhar katakam
  */
-
 function ote_ct_css_output( $template ) {
-
 	$oxygen_theme_enabler_options = get_option( 'oxygen_theme_enabler_option_name' ); // Array of All Options
 
 	if ( ( 'use-theme-mostly' === $oxygen_theme_enabler_options['select_how_you_want_to_enable_the_theme_0'] && ! ote_on_these_views() ) || ( 'use-oxygen-mostly' === $oxygen_theme_enabler_options['select_how_you_want_to_enable_the_theme_0'] && ote_on_these_views() ) ) {
@@ -207,7 +210,6 @@ function ote_ct_css_output( $template ) {
 	}
 
 	return $new_template;
-
 }
 
 add_action( 'wp_print_styles', 'ote_dequeue_oxygen_assets', 100 );
@@ -218,13 +220,82 @@ add_action( 'wp_print_styles', 'ote_dequeue_oxygen_assets', 100 );
  * so that it is after the file was enqueued.
  */
 function ote_dequeue_oxygen_assets() {
+	$oxygen_theme_enabler_options = get_option( 'oxygen_theme_enabler_option_name' ); // Array of All Options
+	if ( ( 'use-theme-mostly' === $oxygen_theme_enabler_options['select_how_you_want_to_enable_the_theme_0'] && ! ote_on_these_views() ) || ( 'use-oxygen-mostly' === $oxygen_theme_enabler_options['select_how_you_want_to_enable_the_theme_0'] && ote_on_these_views() ) ) {
+		wp_dequeue_style( 'oxygen' );
+	}
+}
 
+add_action( 'wp_enqueue_scripts', 'ote_disable_oxy_print_cached_css', PHP_INT_MAX );
+/**
+ * DO NOT output all Oxygen generated styles: number of cached CSS files or dynamic xlink
+ */
+function ote_disable_oxy_print_cached_css() {
 	$oxygen_theme_enabler_options = get_option( 'oxygen_theme_enabler_option_name' ); // Array of All Options
 
-	if ( ( 'use-theme-mostly' === $oxygen_theme_enabler_options['select_how_you_want_to_enable_the_theme_0'] && ! ote_on_these_views() ) || ( 'use-oxygen-mostly' === $oxygen_theme_enabler_options['select_how_you_want_to_enable_the_theme_0'] && ote_on_these_views() ) ) {
-		wp_dequeue_style( 'normalize' );
-		wp_dequeue_style( 'oxygen' );
-		wp_dequeue_style( 'oxygen-styles' );
-		wp_dequeue_style( 'oxygen-universal-styles' );
+	if (
+		( 'use-theme-mostly' === $oxygen_theme_enabler_options['select_how_you_want_to_enable_the_theme_0'] && ! ote_on_these_views() && ! ( isset ( $_GET['ct_builder'] ) && 'true' === $_GET['ct_builder'] ) )
+		||
+		( 'use-oxygen-mostly' === $oxygen_theme_enabler_options['select_how_you_want_to_enable_the_theme_0'] && ote_on_these_views() )
+	) {
+		remove_action( 'wp_head', 'oxy_print_cached_css', 999999 );
+	}
+}
+
+// This has been commented out since it involves hardcoding the function inside the current active theme.
+// The block of code below will effectively do the same.
+// See https://wordpress.stackexchange.com/questions/352533/how-to-remove-all-enqueued-assets-from-the-active-theme.
+// add_action( 'template_redirect', 'ote_dequeue_theme_assets' );
+/**
+ * Unload theme assets on views where Oxygen is enabled.
+ */
+function ote_dequeue_theme_assets() {
+	$oxygen_theme_enabler_options = get_option( 'oxygen_theme_enabler_option_name' ); // Array of All Options
+
+	if ( ( 'use-theme-mostly' === $oxygen_theme_enabler_options['select_how_you_want_to_enable_the_theme_0'] && ote_on_these_views() ) || ( 'use-oxygen-mostly' === $oxygen_theme_enabler_options['select_how_you_want_to_enable_the_theme_0'] && ! ote_on_these_views() ) ) {
+		remove_action( 'wp_enqueue_scripts', 'twentynineteen_scripts' );
+
+		remove_action( 'wp_enqueue_scripts', 'twentytwenty_register_styles' );
+		remove_action( 'wp_enqueue_scripts', 'twentytwenty_register_scripts' );
+	}
+}
+
+add_action( 'wp_enqueue_scripts', 'ote_dequeue_theme_assets2', 20 );
+/**
+ * Unload theme assets on views where Oxygen is enabled.
+ */
+function ote_dequeue_theme_assets2() {
+	$oxygen_theme_enabler_options = get_option( 'oxygen_theme_enabler_option_name' ); // Array of All Options
+
+	if ( ( 'use-theme-mostly' === $oxygen_theme_enabler_options['select_how_you_want_to_enable_the_theme_0'] && ote_on_these_views() ) || ( 'use-oxygen-mostly' === $oxygen_theme_enabler_options['select_how_you_want_to_enable_the_theme_0'] && ! ote_on_these_views() ) ) {
+		global $wp_styles;
+		global $wp_scripts;
+
+		$wp_get_theme = wp_get_theme();
+		
+		$child_theme  = $wp_get_theme->get_stylesheet();
+		$parent_theme = $wp_get_theme->get_template();
+
+		foreach ( $wp_styles->registered as $key => $value ) {
+			$src = $value->src;
+			if ( strpos( $src, "themes/$child_theme/") !== false || strpos( $src, "themes/$parent_theme/" ) !== false ) {
+				unset( $wp_styles->registered[$key] );
+			}
+
+			if ( strpos( $src, "/uploads/$child_theme/" ) !== false || strpos( $src, "/uploads/$parent_theme/" ) !== false ) {
+				unset( $wp_styles->registered[$key] );
+			}
+		}
+		
+		foreach ( $wp_scripts->registered as $key => $value ) {
+			$src = $value->src;
+			if ( strpos( $src, "themes/$child_theme/") !== false || strpos( $src, "themes/$parent_theme/" ) !== false ) {
+				unset( $wp_scripts->registered[$key] );
+			}
+
+			if ( strpos( $src, "/uploads/$child_theme/" ) !== false || strpos( $src, "/uploads/$parent_theme/" ) !== false ) {
+				unset( $wp_scripts->registered[$key] );
+			}
+		}
 	}
 }

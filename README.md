@@ -35,6 +35,11 @@ A few valid examples:
 
 ## Changelog ##
 
+### 1.0.2 - November 15, 2019 ###
+* pages set to use the theme will now work.
+* pages set to use Oxygen will not load theme assets anymore.
+* URLs having `ct_builder=true` i.e., Oxygen editor have been excluded from the plugin so they load.
+
 ### 1.0.1 - November 07, 2019 ###
 * Simplified the return statement
 
